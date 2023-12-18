@@ -1,0 +1,17 @@
+---
+# Edit this file to define what to configure in AWX
+
+# awx ip @
+awx: 
+  ip: 10.1.0.100
+  port: 443
+
+# awx user you want to create. The below user belongs to the above organization
+user: 
+ username: "awx"
+ password: "password"
+
+
+ 
+ 
+

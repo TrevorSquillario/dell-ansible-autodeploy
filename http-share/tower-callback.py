@@ -1,80 +1,63 @@
-import json
+import requests
+from requests.auth import HTTPBasicAuth
+from requests.exceptions import HTTPError
+# from pprint import pprint
 import time
-import os
+import sys
+import json
+import yaml
 import socket
-import tower_cli
+import os
 
-# use the undocumented API client from the tower-cli tool
-group_resource = tower_cli.get_resource('group')
-host_resource = tower_cli.get_resource('host')
+def import_variables_from_file():
+    variables_file=open('tower-config.yml', 'r')
+    variables_in_string=variables_file.read()
+    # print variables_in_string
+    variables_in_yaml=yaml.safe_load(variables_in_string)
+    # print variables_in_yaml
+    # print variables_in_yaml['awx']['ip']
+    variables_file.close()
+    return variables_in_yaml
 
-CREATE_TOWER_GROUPS = True
-DEFAULT_INVENTORY = 1
+def tower_request(url, payload, request_type):
+    config=import_variables_from_file()
 
-def get_tower_group(group_name, create=True):
-    """
-    Given a group name, find or optionally create a corresponding Tower group.
-    """
-    groups = group_resource.list(all_pages=True)['results']
-    matching_groups = [g for g in groups if g['name'] == group_name]
+    authuser = config['user']['username']
+    authpass = config['user']['password']
+    towerhost = config['awx']['ip']
+    towerport = config['awx']['port']
 
-    if not matching_groups:
-        # no matching group
-        if create:
-            tower_group = group_resource.create(name=group_name,
-                                        inventory=DEFAULT_INVENTORY,
-                                        description="auto created ASG group")
-        else:
-            raise RuntimeError("no matching group")
-    else:
-        tower_group = matching_groups[0]
-    return tower_group
+    headers = { 'content-type' : 'application/json' }
+    if towerport != 443:
+        base_url = 'https://' + towerhost + ':' + str(towerport) + '/api/v2/'
+    else: 
+        base_url = 'https://' + towerhost + '/api/v2/'
+    url = base_url + url
 
+    if request_type == 'POST':
+        try:
+            response = requests.post(url, headers=headers, auth=(authuser, authpass), data=json.dumps(payload), verify=False)
+            print(response.json())
+        except HTTPError as e:
+            print(e.response.text)
 
-def get_tower_host(host_name_or_ip, inventory=1):
-    hosts = host_resource.list(inventory=inventory, all_pages=True)['results']
-    matching_hosts = [h for h in hosts if h['name'] == host_name_or_ip]
-    if matching_hosts:
-        return matching_hosts[0]
-    return None
+def launch_job(extra_vars, limit, template_id=1):
+    payload = {
+        "limit": limit,
+        "verbosity": 3,
+        "extra_vars": extra_vars
+    }
+    url = 'job_templates/' + str(template_id) + '/launch/'
+    request = tower_request(url=url, payload=payload, request_type="POST")
 
-
-def add_host_to_inventory(hostname, ip):
-    tower_group = get_tower_group("TestServers",
-                                  create=CREATE_TOWER_GROUPS)
-
-    new_host = host_resource.create(
-                    name=ip,
-                    description=hostname,
-                    inventory=1
-                    )
-
-    host_resource.associate(new_host['id'], tower_group['id'])
-
-
-def remove_host_from_inventory(ip):
-    # get group
-    tower_group = get_tower_group("TestServers",
-                                  create=CREATE_TOWER_GROUPS)
-
-    host = get_tower_host(ip)
-
-    # The Tower API does not allow the removal or disabling of a host
-    # so the best we can do for now is dissociate it from the group
-    # dissacociate? or does it cascade delete?
-
-    if host:
-        host_resource.disassociate(host['id'], tower_group['id'])
-
-def launch_job(job_template, extra_vars, limit):
-    host_resource.launch(
-        job_template=job_template,
-        monitor=False,
-        wait=False,
-        timeout=1500,
-        extra_vars=None,
-        limit=limit
-    )
+def add_host_to_inventory(hostname, ip, inventory_id=1):
+    payload = {
+        "name": ip,
+        "description": hostname,
+        "variables": None
+    }
+    url = 'inventories/' + str(inventory_id) + '/hosts/'
+    request = tower_request(url=url, payload=payload, request_type="POST")
 
 def get_server_hostname():
     hostname = os.uname()[1]
@@ -86,20 +69,20 @@ def get_server_ip():
     return ip
 
 def main():
-    while True:
-        hostname = get_server_hostname()
-        ip = get_server_ip()
-        if hostname and ip:
-            try:
-                add_host_to_inventory(hostname, ip)
-                launch_job(job_template="Test", extra_vars=None, limit=hostname)
-            except Exception as e:
-                # TODO handle more specific errors
-                print(e)
-        else:
-            print("Hostname or IP now found")
-            print(hostname)
-            print(ip)
+    
+    hostname = get_server_hostname()
+    ip = get_server_ip()
+    if hostname and ip:
+        try:
+            add_host_to_inventory(hostname=hostname, ip=ip)
+            launch_job(extra_vars={}, limit=ip, template_id=9)
+        except Exception as e:
+            # TODO handle more specific errors
+            print(e)
+    else:
+        print("Hostname or IP now found")
+        print(hostname)
+        print(ip)
 
 if __name__ == "__main__":
     main()
