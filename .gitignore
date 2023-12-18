@@ -1,0 +1,4 @@
+build_context/
+**/runner-example/inventory/hosts
+**/artifacts
+**/.ansible
