@@ -1,0 +1,18 @@
+version: '3'
+services:
+  tftp-server:
+#    image: taskinen/tftp:latest
+#    #entrypoint: in.tftpd
+#    #command: -L -4 --secure --address 0.0.0.0:69 --verbosity 3 /var/tftpboot
+#    ports:
+      #- "0.0.0.0:69:69/udp"
+#    volumes:
+      #- ./tftpboot:/var/tftpboot:ro
+#    restart: unless-stopped
+  http-share:
+    image: httpd:latest
+    container_name: http-share
+    ports:
+    - '80:80'
+    volumes:
+    - ./http-share:/usr/local/apache2/htdocs

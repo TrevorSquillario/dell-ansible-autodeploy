@@ -1,4 +1,5 @@
 build_context/
 **/runner-example/inventory/hosts
+**/http-share/config.xml
 **/artifacts
 **/.ansible
