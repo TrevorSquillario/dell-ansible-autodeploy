@@ -5,7 +5,7 @@
   tasks:
     - name: Get system inventory.
       dellemc.openmanage.idrac_system_info:
-        idrac_ip: "{{ inventory_hostname }}"
+        idrac_ip: "{{ oob_host }}"
         idrac_user: "{{ user }}"
         idrac_password:  "{{ password }}"
         validate_certs: false

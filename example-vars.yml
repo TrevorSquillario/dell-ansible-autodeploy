@@ -1,0 +1,9 @@
+share_host: "10.1.0.100"
+share_config: "{{ share_host }}"
+scp_file: "config.xml"
+share_drm: "{{ share_host }}/dell-firmware"
+catalog_name: "Catalog.xml"
+share_iso: "{{ share_host }}/iso"
+iso_image: "RHEL-9.2.0-unattended-tower.iso" 
+reboot: False
+job_wait: True

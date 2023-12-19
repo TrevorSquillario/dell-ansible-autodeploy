@@ -1,0 +1,70 @@
+---
+- hosts: all
+  connection: local
+  name: Provision Server
+  gather_facts: False
+  vars_files:
+    - vars.yml
+  tasks:
+  - name: Power On Server
+    dellemc.openmanage.redfish_powerstate:
+      baseuri: "{{ oob_host }}"
+      username: "{{ user }}"
+      password: "{{ password }}"
+      reset_type: "On"
+      validate_certs: "{{ validate_certs }}"
+    tags:
+      - power_on
+
+  - name: Import Template
+    dellemc.openmanage.idrac_server_config_profile:
+      idrac_ip: "{{ oob_host }}"
+      idrac_user: "{{ user }}"
+      idrac_password: "{{ password }}"
+      share_name: "{{ share_drm }}"
+      command: "import"
+      scp_file: "{{ scp_file }}"
+      scp_components: "ALL"
+      shutdown_type: "Graceful"
+      job_wait: "{{ job_wait }}"
+      validate_certs: "{{ validate_certs }}"
+    tags:
+      - import_template
+
+  - name: Update Firmware
+    dellemc.openmanage.idrac_firmware:
+      idrac_ip: "{{ oob_host }}"
+      idrac_user: "{{ user }}"
+      idrac_password: "{{ password }}"
+      share_name: "{{ share_iso }}"
+      catalog_file_name: "{{ catalog_name }}"
+      validate_certs: "{{ validate_certs }}"
+      reboot: "{{ reboot }}"
+      job_wait: "{{ job_wait }}"
+    tags:
+      - update_firmware
+
+  - name: Attach the ISO to Virtual Media slot 1
+    dellemc.openmanage.idrac_virtual_media:
+      idrac_ip: "{{ oob_host }}"
+      idrac_user: "{{ user }}"
+      idrac_password: "{{ password }}"
+      validate_certs: "{{ validate_certs }}"
+      force: true
+      virtual_media:
+        - insert: true
+          image: "{{ share_iso }}/{{ iso_image }}"
+    tags:
+      - boot_iso
+
+  - name: Configure the boot source override mode
+    dellemc.openmanage.idrac_boot:
+      idrac_ip: "{{ oob_host }}"
+      idrac_user: "{{ user }}"
+      idrac_password: "{{ password }}"
+      validate_certs: "{{ validate_certs }}"
+      boot_source_override_target: cd
+      boot_source_override_enabled: once
+      reset_type: force_restart
+    tags:
+      - boot_iso

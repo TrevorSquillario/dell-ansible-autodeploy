@@ -90,4 +90,4 @@ Value: <HTTP Share IP>
 ### Option 60
 Scope Option: 060 Vendor Class
 Name: iDRAC
-Value: -f config.xml -i <HTTP Share IP> -s http
+Value: -f config.xml -i 100.77.19.60 -s http

@@ -1,3 +1,4 @@
+#!/usr/bin/python
 import requests
 from requests.auth import HTTPBasicAuth
 from requests.exceptions import HTTPError
@@ -8,9 +9,10 @@ import json
 import yaml
 import socket
 import os
-
+import subprocess
+ 
 def import_variables_from_file():
-    variables_file=open('tower-config.yml', 'r')
+    variables_file=open('/root/tower-config.yml', 'r')
     variables_in_string=variables_file.read()
     # print variables_in_string
     variables_in_yaml=yaml.safe_load(variables_in_string)
@@ -50,37 +52,59 @@ def launch_job(extra_vars, limit, template_id=1):
     url = 'job_templates/' + str(template_id) + '/launch/'
     request = tower_request(url=url, payload=payload, request_type="POST")
 
-def add_host_to_inventory(hostname, ip, inventory_id=1):
+def add_host_to_inventory(hostname, ip, host_vars, inventory_id=1):
     payload = {
         "name": ip,
         "description": hostname,
-        "variables": None
+        "variables": json.dumps(host_vars)
     }
     url = 'inventories/' + str(inventory_id) + '/hosts/'
     request = tower_request(url=url, payload=payload, request_type="POST")
 
+def get_server_fqdn():
+    fqdn = socket.getfqdn()   
+    return fqdn
+
 def get_server_hostname():
-    hostname = os.uname()[1]
+    fqdn = get_server_fqdn()
+    print(fqdn)
+    hostname = fqdn.split(".")[0]
+    print(hostname)
     return hostname
+
+def get_server_oob_hostname(hostname):
+    oob_host = hostname + '-idrac'
+    return oob_host
 
 def get_server_ip():
     hostname = socket.gethostname()    
     ip = socket.gethostbyname(hostname)    
     return ip
 
+def get_service_tag():
+    st = subprocess.check_output(['dmidecode', '-s', 'system-serial-number'], encoding='UTF-8', universal_newlines=True).strip()
+    print(st)
+    return st
+
 def main():
     
     hostname = get_server_hostname()
+    oob_hostname = get_server_oob_hostname(hostname)
+    service_tag = get_service_tag()
     ip = get_server_ip()
     if hostname and ip:
         try:
-            add_host_to_inventory(hostname=hostname, ip=ip)
+            host_vars = {
+                "oob_host": oob_hostname,
+                "service_tag": service_tag
+            }
+            add_host_to_inventory(hostname=hostname, ip=ip, host_vars=host_vars)
             launch_job(extra_vars={}, limit=ip, template_id=9)
         except Exception as e:
             # TODO handle more specific errors
             print(e)
     else:
-        print("Hostname or IP now found")
+        print("Hostname or IP not found")
         print(hostname)
         print(ip)
 

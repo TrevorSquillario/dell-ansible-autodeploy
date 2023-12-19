@@ -4,3 +4,4 @@ build_context/
 **/http-share/tower-config.yml
 **/artifacts
 **/.ansible
+vars.yml
