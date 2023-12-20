@@ -1,12 +1,3 @@
-- name: OS Config
-  hosts: all
-  tasks:
-    - name: Test OS Connection
-      ansible.builtin.ping:
-    - name: Display all variables/facts known for host
-      debug:
-        var: hostvars[inventory_hostname]
-
 - name: iDRAC Test
   hosts: all
   connection: local
