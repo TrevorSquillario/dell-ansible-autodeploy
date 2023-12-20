@@ -1,12 +1,15 @@
 - name: Get system inventory
   hosts: all
   gather_facts: false
-
   tasks:
+    - name: Test ping
+      ansible.netcommon.net_ping:
+        dest: "{{ oob_host }}"
+
     - name: Get system inventory.
       dellemc.openmanage.idrac_system_info:
         idrac_ip: "{{ oob_host }}"
         idrac_user: "{{ user }}"
         idrac_password:  "{{ password }}"
-        validate_certs: false
+        validate_certs: False
       delegate_to: localhost
