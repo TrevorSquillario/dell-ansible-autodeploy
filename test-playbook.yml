@@ -3,12 +3,9 @@
   connection: local
   gather_facts: false
   tasks:
-    - name: Test ping
-      ansible.builtin.command: ping -c 4 "{{ oob_host }}"
-      register: ping
-
-    - debug: 
-        var: ping
+    - name: Simple A record (IPV4 address) lookup
+      ansible.builtin.debug:
+        msg: "{{ lookup('community.general.dig', oob_host)}}"
 
     - name: Get system inventory.
       dellemc.openmanage.idrac_system_info:
