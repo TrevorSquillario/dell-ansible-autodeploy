@@ -73,7 +73,7 @@ def get_server_hostname():
     return hostname
 
 def get_server_oob_hostname(hostname):
-    oob_host = hostname + '-idrac'
+    oob_host = 'idrac-' + hostname
     return oob_host
 
 def get_server_ip():

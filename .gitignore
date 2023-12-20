@@ -5,3 +5,4 @@ build_context/
 **/artifacts
 **/.ansible
 vars.yml
+RHEL9-ks.cfg

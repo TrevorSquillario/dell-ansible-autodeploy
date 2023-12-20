@@ -10,7 +10,7 @@ services:
       #- ./tftpboot:/var/tftpboot:ro
 #    restart: unless-stopped
   http-share:
-    image: httpd:latest
+    image: http-share
     container_name: http-share
     ports:
     - '80:80'

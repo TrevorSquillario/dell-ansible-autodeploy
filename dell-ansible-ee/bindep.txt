@@ -2,4 +2,3 @@ xorriso
 syslinux
 isomd5sum
 wget
-iputils
