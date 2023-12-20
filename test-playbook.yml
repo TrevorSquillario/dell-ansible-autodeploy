@@ -3,11 +3,7 @@
   connection: local
   gather_facts: false
   tasks:
-    - name: Simple A record (IPV4 address) lookup
-      ansible.builtin.debug:
-        msg: "{{ lookup('community.general.dig', oob_host)}}"
-
-    - name: Get system inventory.
+    - name: Get system inventory
       dellemc.openmanage.idrac_system_info:
         idrac_ip: "{{ oob_host }}"
         idrac_user: "{{ user }}"
